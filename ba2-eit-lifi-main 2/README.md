@@ -18,7 +18,7 @@ Ce projet consiste à concevoir et implémenter un système de communication opt
 - **User Node** : initie la transaction en envoyant une commande au Central Node, puis reçoit l'image transmise par signal lumineux et l'affiche sur un écran hôte.
 - **Central Node** : répond à la commande en transmettant l'image sous forme de signal lumineux modulé.
 
-La communication est fonctionnelle sur une distance de **60 cm**, à un débit allant de **5 kbit/s à 35 kbit/s**. Une version avec **code correcteur d'erreur Hamming(7,4)** a été implémentée pour améliorer la fiabilité de la transmission.
+La communication est fonctionnelle sur une distance de **180 cm**, à un débit allant de **5 kbit/s à 35 kbit/s**. Une version avec **code correcteur d'erreur Hamming(7,4)** a été implémentée pour améliorer la fiabilité de la transmission.
 
 ---
 
