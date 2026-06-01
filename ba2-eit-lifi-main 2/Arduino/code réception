@@ -1,0 +1,294 @@
+import serial 
+import time
+import numpy as np
+import cv2
+import matplotlib.pyplot as plt
+import serial.tools.list_ports
+ports = serial.tools.list_ports.comports()
+mode=1
+portsList = []
+
+
+# Affiche les ports disponibles
+
+for onePort in ports:
+
+    portsList.append(str(onePort))
+
+    print(str(onePort))
+
+ 
+
+# Sélection du port par l'utilisateur
+
+val = input("Select Port: COM")
+
+ 
+
+# Détermination du port à utiliser
+
+portVar = "COM" + val
+
+ 
+
+# Vérification si le port sélectionné est dans la liste des ports disponibles
+
+if portVar not in [port.device for port in ports]:
+
+    print("Port non trouvé.")
+
+    exit()
+
+ 
+
+# Configuration du port série
+
+ser = serial.Serial()
+
+ser.baudrate = 115200
+
+ser.port = portVar
+
+ 
+
+# Ouverture du port série avec gestion des erreurs
+
+try:
+
+    ser.open()
+
+    print(f"Port {portVar} ouvert avec succès.")
+
+except Exception as e:
+
+    print(f"Erreur lors de l'ouverture du port : {e}")
+
+    exit()
+
+
+
+
+
+
+def display_image_from_list(data):
+   # Vérifier le préambule
+   preamble = data[:3]
+   if bytes(preamble) != b'IMG':
+       raise ValueError('Préambule incorrect')
+   else:
+        print("✅ Sequence 'IMG' found in the received data!")
+
+        # Lire les dimensions de l'image
+        width = data[3]
+        height = data[4]
+
+        # Lire la palette de couleurs
+        palette = []
+        index = 5
+        for i in range(256):
+            r = data[index]
+            g = data[index + 1]
+            b = data[index + 2]
+            palette.append((r, g, b))
+            index += 3
+
+        # Lire les pixels de l'image
+        pixels = []
+        for i in range(width * height):
+            color_index = data[index]
+            pixels.append(palette[color_index])
+            index += 1
+
+        # Créer une image vide de dimensions height x width avec 3 canaux de couleur (RGB)
+        img = np.zeros((height, width, 3), dtype=np.uint8)
+
+        # Remplir l'image avec les pixels reçus
+        for y in range(height):
+            for x in range(width):
+                img[y, x] = pixels[y * width + x]
+
+        # Afficher l'image
+        plt.imshow(img)
+        plt.title(f"Image {width}x{height}")
+        plt.axis('off')  # Masquer les axes
+        plt.show()
+indexpoint=0
+
+
+
+
+
+# Demande du bitrate
+
+def get_bitrate():
+
+    bitrate = int(input("BitRate en kbit/s: "))
+
+    bit_duration = 1e6 / (bitrate * 1000)
+
+    print(f"Vous avez choisi un bitrate de {bitrate}kbit/s.")
+
+    print(f"Ce qui fait un temps de {bit_duration:.1f} µs entre chaque bit.\n")
+
+    return bit_duration
+
+ 
+
+bit_duration = get_bitrate()
+
+
+
+# Update the delay 
+time.sleep(2)
+
+ser.write(f"d{bit_duration}b".encode()) 
+time.sleep(1)
+print("New delay sent to Arduino.")
+
+
+def read_integers_from_file(filename):
+    integers = []
+    try:
+        with open(filename, 'r') as file:
+            for line in file:
+                # Split the line into individual numbers based on spaces
+                numbers = line.split()
+                # Convert each number to an integer and add to the list
+                integers.extend(int(num) for num in numbers)
+    except FileNotFoundError:
+        print(f"Le fichier {filename} n'a pas été trouvé.")
+    except ValueError:
+        print("Le fichier contient des valeurs non entières.")
+    return integers
+syndrome_table = {
+    '000': 0,  # no error
+    '001': 4,  # error in bit 4
+    '010': 5,  # error in bit 5
+    '011': 1,  # error in bit 1
+    '100': 6,  # error in bit 6
+    '101': 2,  # error in bit 2
+    '110': 3,  # error in bit 3
+    '111': 7,  # error in bit 7
+}
+
+def correction_and_extraction(encoded_byte):
+    # Extract the bits from LSB to MSB
+    p1 = (encoded_byte >> 6) & 1
+    p2 = (encoded_byte >> 5) & 1
+    d1 = (encoded_byte >> 4) & 1
+    p4 = (encoded_byte >> 3) & 1
+    d2 = (encoded_byte >> 2) & 1
+    d3 = (encoded_byte >> 1) & 1
+    d4 = encoded_byte & 1
+
+    bits = [d4,d3,d2,p4,d1,p2,p1]
+    # Compute syndrome bits
+    c1 = p1 ^ d1 ^ d2 ^ d4
+    c2 = p2 ^ d1 ^ d3 ^ d4
+    c4 = p4 ^ d2 ^ d3 ^ d4
+
+    # Convert syndrome to a string properly
+    syndrome = f'{c4}{c2}{c1}' # Correction ici : ordre correct pour correspondre au tableau
+
+    error_position = syndrome_table[syndrome]
+    if error_position != 0:
+        bits[error_position - 1] ^= 1  # Correction du bit erroné
+        p1, p2, d1, p4, d2, d3, d4 = bits
+    # Reconstruct data bits
+    data_bits = (d1 << 3) | (d2 << 2) | (d3 << 1) | d4
+    return data_bits
+
+def group_decoded_bits(encoded_bytes):
+    grouped_bytes = []
+    for i in range(0, len(encoded_bytes), 2):
+        if i+1 < len(encoded_bytes):
+            # Combine two 4-bit values into one byte
+            lc = correction_and_extraction(encoded_bytes[i])
+            mc = correction_and_extraction((encoded_bytes[i+1]))
+            combined_byte = (mc << 4) | lc
+            grouped_bytes.append(combined_byte)
+    return grouped_bytes
+# Prompt user for input
+command = input("Que souhaitez-vous faire ?Envoyer l’image en mode normal : appuyez sur « s »Envoyer l’image en mode Hamming : appuyez sur « h » ").lower()
+
+if command == 's':
+    ser.write(b's')
+    time.sleep(1)
+    print("Sent 's' to Arduino to start sending data.")
+    time.sleep(2)
+    mode=0
+
+elif command == 'h':
+    ser.write(b'f')
+    time.sleep(1)
+    print("sending image in hamming mode.")
+    time.sleep(2)
+    mode=1
+
+else:
+    print("Invalid input! Please enter 's' or 'h' only.")
+
+
+
+# List to store received binary data
+received_data = []
+imagedata_received = False
+try:
+    while True:
+        if ser.in_waiting > 0:  
+            received_data.append(ser.read(1))  # Read one byte and store it
+            imagedata_received=True
+        if not imagedata_received:
+            ser.write(b's')  # Request image transmission
+            print("Sent 's' to Arduino to start sending data.")
+            time.sleep(2)  # Delay to avoid spamming requests
+
+except KeyboardInterrupt:
+    print("\nStopped by user.")
+
+finally:
+    print("\nTotal Bytes Received:", len(received_data))
+    
+    # Convert list of bytes (each a byte-string of length 1) into a single bytes object
+    received_bytes = b''.join(received_data)
+
+    # Convert binary data to decimal values
+    decimal_data = [int(byte[0]) for byte in received_data]  # Convert each byte to an integer
+
+    # cut s, d ,h from array
+
+    def cut_array_from(arr,n):
+        if n in arr:
+            return arr[arr.index(n):]  # Slice starting from the first occurrence of 25
+        return []  # Return an empty list if 25 is not found
+
+    if(mode==1):
+    
+        with open("hammingtest40.txt", 'w') as outfile:
+            for value in decimal_data:
+                outfile.write(str(value) + ' ')
+                #print("\nTotal Bytes Received:", len(received_data))
+        numbers_list = read_integers_from_file("hammingtest40.txt")
+
+        #cut h,s from array
+
+        numbers_list=cut_array_from(numbers_list,25)
+        decoded = group_decoded_bits(numbers_list)
+        display_image_from_list(decoded)#display image
+    elif(mode==0):
+    
+        print("data----")
+        print(decimal_data)
+        decimal_data=cut_array_from(decimal_data,73)
+        
+        display_image_from_list(decimal_data)
+    
+        try:
+            byte_array = bytes(decimal_data)
+            ascii_data = byte_array.decode('ISO-8859-1', errors='ignore')
+        except UnicodeDecodeError:
+            print("Error: Could not decode the r"
+            "eceived data as UTF-8.")
+ 
+
+    ser.close()

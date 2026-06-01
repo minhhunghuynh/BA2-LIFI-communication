@@ -1,0 +1,1 @@
+Ce code permet d'envoyer le paquet SEND, constitué de la chaîne de caractères "SEND" pour initier la transaction entre le User Node et le Central Node. Le paquet est envoyé sous forme de signal lumineux en modulation "On-Off Keying". 

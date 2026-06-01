@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><project name="Untitled Gantt Project" company="" webLink="http://" view-date="2024-12-23" view-index="0" gantt-divider-location="351" resource-divider-location="300" version="3.3.3311" locale="fr_FR">
+    <description/>
+    <view zooming-state="default:7" id="gantt-chart">
+        <field id="tpd3" name="Nom" width="200" order="0"/>
+        <field id="tpd4" name="Date de début" width="75" order="1"/>
+        <field id="tpd5" name="Date de fin" width="75" order="2"/>
+        <field id="tpd15" name="Notes" width="20" order="3"/>
+        <option id="taskLabelUp" value="name"/>
+        <option id="taskLabelRight" value="resources"/>
+        <option id="filter.completedTasks" value="false"/>
+        <option id="filter.dueTodayTasks" value="false"/>
+        <option id="filter.overdueTasks" value="false"/>
+        <option id="filter.inProgressTodayTasks" value="false"/>
+        <option id="color.recent"><![CDATA[#66ccff #33ccff #ffcc99 #ccffcc #ccccff]]></option>
+    </view>
+    <view id="resource-table">
+        <field id="0" name="Nom" width="210" order="0"/>
+        <field id="1" name="Rôle par défaut" width="86" order="1"/>
+    </view>
+    <!-- -->
+    <calendars>
+        <day-types>
+            <day-type id="0"/>
+            <day-type id="1"/>
+            <default-week id="1" name="default" sun="1" mon="0" tue="0" wed="0" thu="0" fri="0" sat="1"/>
+            <only-show-weekends value="false"/>
+            <overriden-day-types/>
+            <days/>
+        </day-types>
+    </calendars>
+    <tasks empty-milestones="true">
+        <taskproperties>
+            <taskproperty id="tpd0" name="type" type="default" valuetype="icon"/>
+            <taskproperty id="tpd1" name="priority" type="default" valuetype="icon"/>
+            <taskproperty id="tpd2" name="info" type="default" valuetype="icon"/>
+            <taskproperty id="tpd3" name="name" type="default" valuetype="text"/>
+            <taskproperty id="tpd4" name="begindate" type="default" valuetype="date"/>
+            <taskproperty id="tpd5" name="enddate" type="default" valuetype="date"/>
+            <taskproperty id="tpd6" name="duration" type="default" valuetype="int"/>
+            <taskproperty id="tpd7" name="completion" type="default" valuetype="int"/>
+            <taskproperty id="tpd8" name="coordinator" type="default" valuetype="text"/>
+            <taskproperty id="tpd9" name="predecessorsr" type="default" valuetype="text"/>
+        </taskproperties>
+        <task id="0" uid="ca621669a6734add8bac1cea20eb06fd" name="RAPPORT" meeting="false" start="2025-02-03" duration="28" complete="0" expand="true">
+            <task id="1" uid="8c331a942241455cb7fdd03960087b5a" name="structuration" color="#66ccff" meeting="false" start="2025-02-03" duration="6" complete="0" expand="true"/>
+            <task id="15" uid="d397d7c98c5b46e29024ae29a6c084bc" name="abstract + introduction" color="#66ccff" meeting="false" start="2025-02-03" duration="6" complete="0" expand="true"/>
+            <task id="18" uid="59f21b1c449743aa868d22d441262f68" name="rédaction comparateur" color="#66ccff" meeting="false" start="2025-02-11" duration="6" complete="0" expand="true"/>
+            <task id="14" uid="df17ac89e6344c22afecc9f8a06fb70d" name="rédaction partie circuit" color="#66ccff" meeting="false" start="2025-02-25" duration="5" complete="0" expand="true"/>
+            <task id="16" uid="bf8be25f93004019b1658371df093179" name="rédaction code réception" color="#66ccff" meeting="false" start="2025-02-19" duration="11" complete="0" expand="true"/>
+            <task id="19" uid="6dd893c0eb8b4d39a1861d211d64c706" name="relecture + correction" color="#66ccff" meeting="false" start="2025-03-06" duration="5" complete="0" expand="true">
+                <depend id="6" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="6" uid="5955431ddbc84b48be9129a3ec8a7046" name="remise rapport" meeting="true" start="2025-03-13" duration="0" complete="0" expand="true"/>
+        </task>
+        <task id="2" uid="c3dd85c2ccf54884b9541b902ad82951" name="CIRCUIT" meeting="false" start="2025-02-03" duration="31" complete="0" thirdDate="2025-02-03" thirdDate-constraint="1" expand="true">
+            <task id="3" uid="d752cb0ecced4d8bb3939a24e0642c57" name="optimisation circuit ( constante RC )" color="#ccffcc" meeting="false" start="2025-02-03" duration="11" complete="0" expand="true">
+                <depend id="11" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="11" uid="498e5a4d99b74f5e84b42aab3fe7d0b6" name="fabrication PCB" color="#ccffcc" meeting="false" start="2025-02-18" duration="5" complete="0" expand="true">
+                <depend id="13" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="13" uid="1c4a864588fb4dfd92e19f18d53e9ade" name="soudage" color="#ccffcc" meeting="false" start="2025-02-25" duration="5" complete="0" expand="true"/>
+            <task id="20" uid="a7d5d7b1f4f04e6ca7ff926b0c6d27d2" name="tests" color="#ccffcc" meeting="false" start="2025-03-04" duration="10" complete="0" expand="true"/>
+            <task id="12" uid="e7e4d89bf6a84e0cb8c5b5bb28495056" name="évaluation prototype" meeting="true" start="2025-03-17" duration="0" complete="0" expand="true"/>
+        </task>
+        <task id="8" uid="754048ada4ae43d3a4671b5eee4a13bb" name="CODE" meeting="false" start="2025-02-03" duration="12" complete="0" expand="true">
+            <task id="7" uid="87aaec64ce8b4fb8a3e7e7044ef5d037" name="code réception" color="#ccccff" meeting="false" start="2025-02-03" duration="6" complete="0" expand="true">
+                <depend id="10" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="9" uid="01c53d9826d14a6ca84de469edc31d58" name="code réception + code correcteur" color="#ccccff" meeting="false" start="2025-02-11" duration="6" complete="0" expand="true">
+                <depend id="10" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="10" uid="666c7f13771a48e1b10cd168174439f4" name="codes fonctionnels" meeting="true" start="2025-02-19" duration="0" complete="0" expand="true"/>
+        </task>
+        <task id="17" uid="ab56e10bd1f6423db131490d170e693f" name="PRESENTATION ORALE" meeting="false" start="2025-03-03" duration="16" complete="0" expand="true">
+            <task id="21" uid="4b18c63f88b24617bf221713dbb5fc97" name="slides" color="#ffcc99" meeting="false" start="2025-03-03" duration="6" complete="0" expand="true">
+                <depend id="22" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="22" uid="ca714c042e874bc984319ea0de626ff8" name="préparation présentation orale" color="#ffcc99" meeting="false" start="2025-03-11" duration="10" complete="0" expand="true">
+                <depend id="23" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="23" uid="45ab03fef2a54736b825ce0f1aff1363" name="présentation" meeting="true" start="2025-03-25" duration="0" complete="0" expand="true"/>
+        </task>
+    </tasks>
+    <resources>
+        <resource id="0" name="Nora" function="Default:0" contacts="" phone=""/>
+        <resource id="1" name="Abdalla" function="Default:0" contacts="" phone=""/>
+        <resource id="2" name="Minhhung" function="Default:0" contacts="" phone=""/>
+        <resource id="3" name="Bily" function="Default:0" contacts="" phone=""/>
+        <resource id="4" name="Winnie" function="Default:0" contacts="" phone=""/>
+        <resource id="5" name="Djibril" function="Default:0" contacts="" phone=""/>
+    </resources>
+    <allocations>
+        <allocation task-id="7" resource-id="0" function="Default:0" responsible="false" load="100.0"/>
+        <allocation task-id="9" resource-id="0" function="Default:0" responsible="false" load="100.0"/>
+        <allocation task-id="7" resource-id="1" function="Default:0" responsible="false" load="100.0"/>
+        <allocation task-id="9" resource-id="1" function="Default:0" responsible="false" load="100.0"/>
+        <allocation task-id="16" resource-id="1" function="Default:0" responsible="true" load="100.0"/>
+        <allocation task-id="3" resource-id="2" function="Default:0" responsible="false" load="100.0"/>
+        <allocation task-id="11" resource-id="2" function="Default:0" responsible="false" load="100.0"/>
+        <allocation task-id="14" resource-id="2" function="Default:0" responsible="true" load="100.0"/>
+        <allocation task-id="3" resource-id="3" function="Default:0" responsible="false" load="100.0"/>
+        <allocation task-id="13" resource-id="3" function="Default:0" responsible="true" load="100.0"/>
+        <allocation task-id="11" resource-id="3" function="Default:0" responsible="false" load="100.0"/>
+        <allocation task-id="1" resource-id="4" function="Default:0" responsible="true" load="100.0"/>
+        <allocation task-id="15" resource-id="4" function="Default:0" responsible="false" load="100.0"/>
+        <allocation task-id="18" resource-id="4" function="Default:0" responsible="true" load="100.0"/>
+        <allocation task-id="15" resource-id="5" function="Default:0" responsible="false" load="100.0"/>
+    </allocations>
+    <vacations/>
+    <previous/>
+    <roles roleset-name="Default"/>
+</project>

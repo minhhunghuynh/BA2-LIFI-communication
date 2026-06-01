@@ -1,0 +1,157 @@
+const int readPin=2;
+const int testPin=7;
+int ledPin=9;
+unsigned long Delay=200;
+unsigned long delayPeriod;
+uint8_t ImageByte=0;
+uint8_t bit=0;
+ String lsbResult="";
+ String hammingsend="";
+ float shift=7/8;
+
+ unsigned long bitDelaytime;
+char receiverImage='n';
+
+String hamming="110110000101010100101101010010010001100111001101000100011001110001100101000110011";
+
+
+
+//convert the word send to binary LSB-first
+
+String getLSBBinary(String text) {
+    String lsbBinary = "11";
+
+    for (int i = 0; i < text.length(); i++) {
+        char c = text[i];            
+        byte binary = c;              
+        String bitStr = "10";
+        // Extract bits LSB-first
+        for (int j = 0; j < 8; j++) {
+            bitStr += (binary & (1 << j)) ? '1' : '0';  
+        }
+
+        lsbBinary += bitStr + "";
+     
+    }
+   lsbBinary+="11";
+  return lsbBinary;
+}
+
+
+
+//receieve the whole image data
+
+void receieveImage() {
+ 
+ 
+   bitDelaytime = micros();
+  //wait for start bit
+    for (;;) {
+   bitDelaytime+= Delay/4;
+    while (micros() < bitDelaytime);
+ 
+    if (digitalRead(readPin) != 1) {
+        break;
+    }
+}
+     
+   bitDelaytime+= Delay;
+    while (micros() < bitDelaytime);
+ 
+    for (int i = 0; i < 8; i++) {
+        bit = digitalRead(readPin);
+        ImageByte |= (bit << i);
+        bitDelaytime += Delay;
+       while (micros() < bitDelaytime);
+    }
+    Serial.write(ImageByte);
+    ImageByte= 0;
+
+    //wait until stop bit
+for(;;) {
+  bitDelaytime+= Delay/4;
+    while (micros() < bitDelaytime);
+   if(digitalRead(readPin) != 1)
+       break;
+}
+   
+ 
+    return;
+}
+
+
+void setup()
+{
+  pinMode(ledPin, OUTPUT);
+  pinMode(readPin, INPUT);
+  Serial.begin(115200);
+  digitalWrite(ledPin,HIGH);
+
+ String word = "SEND";
+ 
+ lsbResult = getLSBBinary(word);
+
+
+
+}
+void loop() {
+ 
+
+  if(receiverImage=='y')
+  {
+ 
+    receieveImage();
+  }
+
+  if(Serial.available()>0)
+  {
+    char yourOrder=Serial.read();
+    Serial.print(yourOrder);
+    switch (yourOrder) {
+            case 's':  
+                receiverImage = 'y';
+                ControlCircuitLeds(hamming, Delay);//for sending SEND in hamming mode
+               // ControlCircuitLeds(lsbResult, Delay);//for sending the word send in normal mode
+                break;
+
+            case 'd':  
+                 String receivedData = Serial.readStringUntil('b');  // Read until 'b'
+                 Delay = receivedData.toInt();
+
+                break;
+            case 'h':
+                receiverImage = 'y';
+               
+                //ControlCircuitLeds(hammingsend, Delay);
+                break;
+
+            default:
+                Serial.println("Invalid command received.");
+                break;
+        }
+   
+ 
+ 
+  }
+
+
+}
+void ControlCircuitLeds(const String& send_str, unsigned long delayTime){
+  delayPeriod=micros();
+  delayPeriod+=delayTime/4;
+  for(char bit : send_str)
+  {
+    while(micros() < delayPeriod);
+    if(bit == '1')
+    {
+      digitalWrite(ledPin,HIGH);
+
+    }
+     if(bit == '0')
+    {
+      digitalWrite(ledPin,LOW);
+     
+    }
+    delayPeriod +=delayTime;
+  }
+}

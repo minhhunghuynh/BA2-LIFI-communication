@@ -1,0 +1,283 @@
+const int readPin=2;
+const int testPin=7;
+int ledPin=9;
+int Delay=200;
+unsigned long delayPeriod;
+uint8_t ImageByte=0;
+uint8_t bit=0;
+ String lsbResult="";
+ String hammingsend="";
+
+ unsigned long bitDelaytime;
+char receiverImage='n';
+
+
+// hamming74_encode_4bit
+// --------------------------------------------------
+// nibble[] holds 4 bits in the order [b3, b2, b1, b0], each 0 or 1.
+// Returns a 7-bit Hamming code as a String in the order [p1, p2, b3, p4, b2, b1, b0].
+String hamming74_encode_4bit(const int nibble[4]) {
+  // Extract bits
+  int b3 = nibble[0];
+  int b2 = nibble[1];
+  int b1 = nibble[2];
+  int b0 = nibble[3];
+  
+  // Calculate parity bits
+  int p1 = (b3 ^ b2 ^ b0) & 1;  // covers bits 3,2,0
+  int p2 = (b3 ^ b1 ^ b0) & 1;  // covers bits 3,1,0
+  int p4 = (b2 ^ b1 ^ b0) & 1;  // covers bits 2,1,0
+  
+  // Build 7-bit code as MSB-first string
+  // [p1, p2, b3, p4, b2, b1, b0]
+  String result = String(p1) +
+                  String(p2) +
+                  String(b3) +
+                  String(p4) +
+                  String(b2) +
+                  String(b1) +
+                  String(b0);
+                  
+  return result; 
+}
+
+
+// encode_byte_with_hamming
+// --------------------------------------------------
+// byteStr: an 8-character binary string, e.g. "11001010" (b7..b0 in left->right order).
+// Returns two 8-bit strings (LSB-first) as a pair of Arduino Strings:
+//   - encoded_low_str  (with the prepended '0' bit, reversed)
+//   - encoded_high_str (with the prepended '1' bit, reversed)
+void encode_byte_with_hamming(const String &byteStr,
+                              String &encoded_low_str,
+                              String &encoded_high_str) 
+{
+  // 1) Parse the 8 bits: b7..b0
+  //    For example, if byteStr = "11001010",
+  //    b7='1', b6='1', b5='0', b4='0', b3='1', b2='0', b1='1', b0='0'.
+  int b7 = byteStr.charAt(0) - '0';
+  int b6 = byteStr.charAt(1) - '0';
+  int b5 = byteStr.charAt(2) - '0';
+  int b4 = byteStr.charAt(3) - '0';
+  int b3 = byteStr.charAt(4) - '0';
+  int b2 = byteStr.charAt(5) - '0';
+  int b1 = byteStr.charAt(6) - '0';
+  int b0 = byteStr.charAt(7) - '0';
+  
+  // 2) Split into nibbles: high_nibble = b7..b4, low_nibble = b3..b0
+  int high_nibble[4] = { b7, b6, b5, b4 };
+  int low_nibble[4]  = { b3, b2, b1, b0 };
+  
+  // 3) Apply Hamming(7,4) to each nibble
+  String hamming_high = hamming74_encode_4bit(high_nibble); // 7 bits in MSB-first order
+  String hamming_low  = hamming74_encode_4bit(low_nibble);  // 7 bits in MSB-first order
+
+  // 4) Prepend ID bits in MSB-first order:
+  //    0 for LC, 1 for MC
+  //    So, for example: 
+  //      encoded_low  = [0, L6, L5, L4, L3, L2, L1, L0] (8 bits total, MSB-first)
+  //      encoded_high = [1, H6, H5, H4, H3, H2, H1, H0]
+  String encoded_low  = String('0') + hamming_low;   // total 8 bits, still MSB-first
+  String encoded_high = String('1') + hamming_high;  // total 8 bits, still MSB-first
+  
+  // 5) Reverse each code so LSB is at index 0
+  //    We'll build each reversed code into a new String.
+  //    For an 8-bit string, valid indices are 0..7.
+  encoded_low_str  = "";
+  encoded_high_str = "";
+  
+  for(int i = 7; i >= 0; i--) {
+    encoded_low_str  += encoded_low.charAt(i);
+    encoded_high_str += encoded_high.charAt(i);
+  }
+  
+  // Now encoded_low_str and encoded_high_str each have 8 bits, reversed so the LSB is at index 0.
+}
+
+// hamming_protocol_encode
+// --------------------------------------------------
+// binaryArray: pointer to an array of 8-bit binary String objects
+// numBytes: how many 8-bit strings are in the array
+//
+// Returns a single String containing all the encoded blocks, joined by "--".
+String hamming_protocol_encode(const String binaryArray[], int numBytes) {
+  String all_codes = "110";
+  
+  for(int i = 0; i < numBytes; i++) {
+    // For each 8-bit string
+    String byteStr = binaryArray[i];
+    
+    // Encode into two 8-bit blocks
+    String lc_code;
+    String mc_code;
+    encode_byte_with_hamming(byteStr, lc_code, mc_code);
+    
+    
+    // If you want each block appended individually, 
+    // you'd do something like:
+    //   all_codes += lc_code + "--" + mc_code + "--";
+    // The Python version appended *both* 8-bit blocks 
+    // before moving on. We'll match that approach:
+    all_codes += lc_code; 
+    all_codes += "10";
+    all_codes += mc_code;
+    
+    // Optionally, add another separator if we want to 
+    // keep going and not end with an extra '--'
+    if(i < numBytes - 1) {
+      all_codes += "10";
+    }
+  }
+  
+  return all_codes;
+}
+
+
+
+
+
+
+//convert the word send to binary LSB-first
+
+String getLSBBinary(String text) {
+    String lsbBinary = "11";
+
+    for (int i = 0; i < text.length(); i++) {
+        char c = text[i];             
+        byte binary = c;              
+        String bitStr = "10";
+        // Extract bits LSB-first
+        for (int j = 0; j < 8; j++) {
+            bitStr += (binary & (1 << j)) ? '1' : '0';  
+        }
+
+        lsbBinary += bitStr + ""; 
+      
+    }
+   lsbBinary+="11";
+  return lsbBinary; 
+}
+
+
+
+//receieve the whole image data
+
+void receieveImage() {
+ 
+   bitDelaytime = micros();
+  //wait for start bit
+    for (;;) {
+    bitDelaytime+=Delay/4;
+     while (micros() < bitDelaytime); 
+    if (digitalRead(readPin) != 1) {
+        break;
+    }
+}
+     
+   bitDelaytime+= Delay;
+    while (micros() < bitDelaytime); 
+ 
+    for (int i = 0; i < 8; i++) { 
+        bit = digitalRead(readPin);
+        ImageByte |= (bit << i); 
+        bitDelaytime += Delay;
+        while (micros() < bitDelaytime);
+    }
+    Serial.write(ImageByte); 
+    ImageByte= 0; 
+
+    //wait until stop bit
+for(;;) {
+ bitDelaytime+=Delay/4;
+  while (micros() < bitDelaytime); 
+   if(digitalRead(readPin) != 1)
+       break;
+}
+   
+ 
+    return;
+}
+
+
+void setup()
+{
+  pinMode(ledPin, OUTPUT);
+  pinMode(readPin, INPUT);
+  Serial.begin(115200);
+  digitalWrite(ledPin,HIGH);
+
+ String word = "SEND";
+  
+ lsbResult = getLSBBinary(word);
+
+ // Example array of 8-bit binary strings
+  String binaryArray[] = {"01010011", "01000101", "01001110", "01000100" };
+  int numBytes = sizeof(binaryArray) / sizeof(binaryArray[0]);
+  
+  // Encode all using the Hamming protocol
+  hammingsend = hamming_protocol_encode(binaryArray, numBytes);
+ 
+
+
+}
+void loop() {
+ 
+
+  if(receiverImage=='y')
+  {
+ 
+    receieveImage();
+  }
+
+  if(Serial.available()>0)
+  {
+    char yourOrder=Serial.read();
+    Serial.print(yourOrder);
+    switch (yourOrder) {
+            case 's':  
+                receiverImage = 'y';
+               // ControlCircuitLeds(hammingsend, Delay);//for sending SEND in hamming mode
+                ControlCircuitLeds(lsbResult, Delay);//for sending the word send in normal mode
+                break;
+
+            case 'd':  
+                 String receivedData = Serial.readStringUntil('b');  // Read until 'b'
+                 Delay = receivedData.toInt();
+
+                break;
+            case 'h':
+                receiverImage = 'y';
+               
+                ControlCircuitLeds(hammingsend, Delay);
+                break;
+
+            default:
+                Serial.println("Invalid command received.");
+                break;
+        }
+    
+  
+  
+  }
+
+
+}
+void ControlCircuitLeds(const String& send_str, unsigned long delayTime){
+  delayPeriod=micros();
+  delayPeriod+=delayTime/4;
+  for(char bit : send_str)
+  {
+    while(micros() < delayPeriod);
+    if(bit == '1')
+    {
+      digitalWrite(ledPin,HIGH);
+
+    }
+     if(bit == '0')
+    {
+      digitalWrite(ledPin,LOW);
+      
+    }
+    delayPeriod +=delayTime;
+  }
+}
